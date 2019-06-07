@@ -845,9 +845,18 @@ void GAnalytics::Private::postMessage()
     }
 
     buffer.postQuery.addQueryItem("qt", QString::number(timeDiff));
-    request.setRawHeader("Connection", connection.toUtf8());
     QByteArray ba;
     ba = buffer.postQuery.query(QUrl::FullyEncoded).toUtf8();
+
+    // If loglevel is debug, log query and don't send it
+    if (q->logLevel() == Debug)
+    {
+        logMessage(Debug, ba);
+        messageQueue.dequeue();
+        emit postNextMessage();
+        return;
+    }
+    request.setRawHeader("Connection", connection.toUtf8());
     request.setHeader(QNetworkRequest::ContentLengthHeader, ba.length());
 
     // Create a new network access manager if we don't have one yet
